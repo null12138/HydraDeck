@@ -60,6 +60,8 @@ python3 custom_web.py
 
 默认监听：`http://127.0.0.1:7861`
 
+> 说明：HydraDeck 仅保留 FastAPI WebUI，不再使用 Gradio。
+
 ### 运行前环境变量（可选）
 
 ```bash
