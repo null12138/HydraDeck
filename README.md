@@ -1,3 +1,12 @@
+---
+title: HydraDeck
+emoji: 📚
+colorFrom: indigo
+colorTo: blue
+sdk: docker
+pinned: false
+---
+
 # hydradeck
 
 一个可重复、可审计的 Grok Deep Research 流水线（多 Persona 迭代），输出：
