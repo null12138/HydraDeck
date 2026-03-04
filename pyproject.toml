@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hydradeck"
+version = "0.1.0"
+description = "Grok-driven deep research pipeline that outputs detailed reports, speech scripts, and Beamer slides."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "hydradeck contributors" }]
+dependencies = [
+  "requests>=2.31.0",
+  "urllib3>=2,<3",
+  "gradio>=4.44.1,<5",
+  "huggingface_hub<1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+  "ruff>=0.6.0",
+]
+
+[project.scripts]
+hydradeck = "hydradeck.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["hydradeck*"]
+
+[tool.setuptools.package-data]
+hydradeck = ["templates/**/*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
