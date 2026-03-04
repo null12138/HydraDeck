@@ -19,8 +19,6 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlparse
 from urllib.request import Request, urlopen
 
-import gradio as gr
-
 from hydradeck.clients import ChatMessage, GrokClient
 from hydradeck.config import resolve_api_key, resolve_base_url, resolve_model
 from hydradeck.core.types import RunConfig
@@ -308,7 +306,7 @@ def _run_agentic_pipeline(
     api_key: str,
     request_budget: float,
     use_mock: bool,
-    progress: gr.Progress = gr.Progress(),
+    progress=None,
     stage_callback=None,
     language: str = "en",
     stage_models: dict[str, str] | None = None,
@@ -328,7 +326,8 @@ def _run_agentic_pipeline(
 
     def mark(step: int, label: str, detail: str) -> None:
         pct = min(max(step / total_steps, 0.0), 1.0)
-        _ = progress(pct, desc=label)
+        if callable(progress):
+            _ = progress(pct, desc=label)
         stage_logs.append(f"{step}/{total_steps} {label}: {detail}")
 
     def emit_stage(
@@ -994,7 +993,7 @@ def _run_agentic_pipeline_stream(
             api_key,
             request_budget,
             use_mock,
-            gr.Progress(),
+            None,
             on_stage,
         )
         wait_tick = 0
@@ -1183,87 +1182,3 @@ def _run_pipeline(
         copy_zip.write_bytes(out_zip.read_bytes())
         status = f"Done. Output zip: {copy_zip}"
         return status, report_md, paper_tex, slides_tex
-
-
-with gr.Blocks(title="hydradeck WebUI") as demo:
-    gr.Markdown("# hydradeck WebUI\nRun deep-research and export paper/slides tex.")
-    with gr.Row():
-        topic = gr.Textbox(label="Topic", value="RynnBrain technical report")
-        model = gr.Textbox(label="Model", value="grok-4")
-    with gr.Row():
-        base_url = gr.Textbox(label="Base URL", value="https://api.example.com")
-        api_key = gr.Textbox(label="API Key", type="password", value="")
-    with gr.Row():
-        max_sources = gr.Number(label="Max sources", value=6, precision=0)
-        iterations = gr.Number(label="Iterations", value=1, precision=0)
-        llm_timeout = gr.Number(label="LLM timeout (s)", value=90)
-        request_budget = gr.Number(label="Request budget (s)", value=35)
-    seed_urls = gr.Textbox(
-        label="Seed URLs (one per line)",
-        value="https://github.com/alibaba-damo-academy/RynnBrain\nhttps://arxiv.org",
-        lines=4,
-    )
-    use_mock = gr.Checkbox(label="Use mock (offline)", value=False)
-
-    check_btn = gr.Button("Quick API Check")
-    run_btn = gr.Button("Run Full Pipeline")
-    run_agentic_btn = gr.Button("Run Agentic Pipeline")
-    status = gr.Textbox(label="Status")
-    progress_pct = gr.Slider(label="Progress (%)", minimum=0, maximum=100, step=1, value=0, interactive=False)
-    progress_log = gr.Textbox(label="Agent Progress", lines=10)
-    scope_json = gr.Textbox(label="Scope (Agent-1)", lines=10)
-    section_plan_json = gr.Textbox(label="Section Plan (Agent-2)", lines=10)
-    report_md = gr.Textbox(label="report.md", lines=14)
-    paper_tex = gr.Textbox(label="paper.tex", lines=14)
-    slides_tex = gr.Textbox(label="slides.tex", lines=14)
-    rendered_pdfs = gr.Textbox(label="Rendered PDF Paths", lines=2)
-    paper_pdf_file = gr.Textbox(label="paper.pdf path", lines=1)
-    slides_pdf_file = gr.Textbox(label="slides.pdf path", lines=1)
-
-    check_btn.click(
-        _api_quick_check,
-        [base_url, api_key, model, request_budget],
-        [status],
-        queue=False,
-    )
-
-    run_btn.click(
-        _run_pipeline,
-        [
-            topic,
-            model,
-            base_url,
-            api_key,
-            max_sources,
-            iterations,
-            llm_timeout,
-            request_budget,
-            seed_urls,
-            use_mock,
-        ],
-        [status, report_md, paper_tex, slides_tex],
-        queue=False,
-    )
-
-    run_agentic_btn.click(
-        _run_agentic_pipeline_stream,
-        [topic, model, base_url, api_key, request_budget, use_mock],
-        [
-            status,
-            progress_log,
-            scope_json,
-            section_plan_json,
-            paper_tex,
-            slides_tex,
-            rendered_pdfs,
-            paper_pdf_file,
-            slides_pdf_file,
-            progress_pct,
-        ],
-        queue=True,
-    )
-
-
-if __name__ == "__main__":
-    demo.queue(default_concurrency_limit=2)
-    demo.launch(server_name="0.0.0.0", server_port=7860)

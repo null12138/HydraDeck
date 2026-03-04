@@ -7,9 +7,10 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+import os
+
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
-import gradio as gr
 from pydantic import BaseModel
 
 from app import _api_quick_check, _run_agentic_pipeline
@@ -167,7 +168,7 @@ def _run_job(job_id: str, req: RunRequest) -> None:
             api_key=req.api_key,
             request_budget=req.request_budget,
             use_mock=req.use_mock,
-            progress=gr.Progress(),
+            progress=None,
             stage_callback=on_stage,
             language=req.language,
             stage_models={
@@ -544,4 +545,5 @@ if __name__ == "__main__":
     import uvicorn
 
     _load_state()
-    uvicorn.run(app, host="0.0.0.0", port=7861)
+    port = int(os.getenv("PORT", "7861"))
+    uvicorn.run(app, host="0.0.0.0", port=port)
